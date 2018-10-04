@@ -167,6 +167,100 @@ from branch b join staff s on b.branchno = s.branchno
         join propertyforrent p on p.staffno = p.staffno
 group by b.city;
 
+--1.	List all clients who have viewed a property. 
+--Include clients who haven’t viewed any property. 
+--The result should show the client number, first name, property number and view date.
+select c.clientno , c.fname , v.propertyno , v.viewdate
+from client c full join viewing v on c.clientno = v.clientno;
+
+--2.	List all staffs who are not responsible to any property.
+select s.*
+from  staff s left join propertyforrent p on s.staffno = p.staffno
+where p.staffno is null;
+
+--3.	List all properties that are not viewed by any client and 
+--the properties are managed by staffs who work in the branch located at 22 Deer Road street.
+select p.*
+from propertyforrent p left join viewing v on p.propertyno = v.propertyno
+                            join staff s on p.staffno = s.staffno
+                            join branch b on s.branchno = b.branchno
+where b.street like '22%';
+
+--4.	List all people in the Dream Home database. The result should show the person number, 
+--first name and last name from the Staff, PrivateOwner, and Client tables.
+select staffno as "Person Number", fname ||' '|| lname as name
+from staff
+UNION
+select ownerno , fname ||' '|| lname as name
+from privateowner
+UNION
+select clientno , fname ||' '|| lname as name
+from client;
+
+--5.	List the property number of properties that were never viewed by any clients
+select propertyno
+from propertyforrent
+minus
+select propertyno
+from viewing;
+
+--6.	List all cities where there is either a branch office or a property for rent (but not both)
+select city
+from branch
+minus
+select city
+from propertyforrent;
+
+--7.	List the full details of all private owners whose property was never viewed by clients. 
+--(Hint: Use a join and a set operator) 
+select p.propertyno , po.* 
+from privateowner po join propertyforrent p on po.ownerno = p.ownerno
+minus
+select p.propertyno , po.*
+from privateowner po join propertyforrent p on po.ownerno = p.ownerno
+                     join viewing v on p.propertyno = v.propertyno;
+                     
+--1.	List staffs who manage properties with three rooms. 
+select *
+from staff
+where staffno in(select staffno from propertyforrent where rooms=3);
+
+--2.	List properties that owner’s telephone number starts with 012.
+select *
+from propertyforrent
+where ownerno in(select ownerno from privateowner where telno like '012%');
+
+--3.	List branches that do not have any staff.
+select *
+from branch
+where branchno not in(select branchno from staff);
+
+--4.	List staffs whose salary is less than the average salary of all staffs and 
+--staffs who work in the branch located in Glasgow city.
+select *
+from staff
+where salary <(select avg(salary) from staff) and branchno in(select branchno from branch where lower(city) = 'glasgow');
+
+--5.	List staffs whose salary is greater than the salaries of all staffs who work at branch number B003.
+select *
+from staff
+where salary > (select max(salary) from staff where branchno = 'B003');
+
+--6.	List properties that are viewed by clients more than two times.
+select *
+from propertyforrent
+where propertyno in(select propertyno from viewing group by propertyno having count(clientno) > 2);
+
+--7.	List clients who registered in the branch at 163 Main Street.
+select *
+from registration
+where branchno in(select branchno from branch where street like '%163%');
+
+--8.	In each branch, list staffs whose salary is greater than the average salary in their branch.
+select s.fname, s.branchno, s.salary, sub.avgsala
+from staff s join (select branchno, avg(salary) as avgsala from staff group by branchno) sub on s.branchno = sub.branchno
+where s.salary > sub.avgsala;
+
 
 select s2.fname, s2.salary
 from staff s1 cross join staff s2
